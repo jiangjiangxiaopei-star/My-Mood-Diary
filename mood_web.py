@@ -5,7 +5,19 @@ import os
 
 # 页面基本设置
 st.set_page_config(page_title="蒋蒋的心情晴雨表 Web", page_icon="✨")
-
+st.markdown("""
+    <style>
+    /* 蒋蒋专属：统一将 primary 颜色定义为护眼绿色 */
+    :root {
+        --primary-color: #82C91E;
+    }
+    .stButton > button[kind="primary"] {
+        background-color: #82C91E;
+        color: white;
+        border: none;
+    }
+    </style>
+""", unsafe_allow_html=True)
 # 自定义绿色按钮样式
 st.markdown("""
     <style>
@@ -41,15 +53,25 @@ story = st.text_area("3. Story", placeholder="Tell your story...", height=150)
 st.write("4. Category")
 col_h, col_s = st.columns(2)
 
+# --- 4. Category 分类区域 ---
+st.write("4. Category")
+col_h, col_s = st.columns(2)
+
+# 初始化选中状态
 if 'selected_cat' not in st.session_state:
     st.session_state.selected_cat = None
 
-if col_h.button("HAPPY", type="primary" if st.session_state.selected_cat=="HAPPY" else "secondary", use_container_width=True):
-    st.session_state.selected_cat = "HAPPY"
-if col_s.button("SAD", type="primary" if st.session_state.selected_cat=="SAD" else "secondary", use_container_width=True):
-    st.session_state.selected_cat = "SAD"
+# HAPPY 按钮逻辑：如果选中了就用 primary（绿色），没选中就用 secondary（灰色）
+h_type = "primary" if st.session_state.web_selected_cat == "HAPPY" else "secondary"
+if col_h.button("HAPPY", type=h_type, use_container_width=True):
+    st.session_state.web_selected_cat = "HAPPY"
+    st.rerun() # 立即刷新让颜色生效
 
-st.write("---")
+# SAD 按钮逻辑
+s_type = "primary" if st.session_state.web_selected_cat == "SAD" else "secondary"
+if col_s.button("SAD", type=s_type, use_container_width=True):
+    st.session_state.web_selected_cat = "SAD"
+    st.rerun()
 
 # 存档按钮
 if st.button("🪄 Archive & Save", use_container_width=True):
@@ -62,23 +84,4 @@ if st.button("🪄 Archive & Save", use_container_width=True):
             f.write(log)
         
         st.balloons()
-        st.toast("存档成功！蒋蒋真棒 ✨")
-        
-        # 自动清空
-        st.session_state.loc = ""
-        st.session_state.selected_cat = None
-        st.rerun()
-    else:
-        st.error("请确保选择了分类并填写了故事内容哦！")
-
-# 底部查看历史
-st.write("### 📖 查看历史记录")
-tab1, tab2 = st.tabs(["😊 HAPPY View", "☁️ SAD View"])
-with tab1:
-    if os.path.exists("happy_history.txt"):
-        with open("happy_history.txt", "r", encoding="utf-8") as f:
-            st.text(f.read())
-with tab2:
-    if os.path.exists("sad_history.txt"):
-        with open("sad_history.txt", "r", encoding="utf-8") as f:
-            st.text(f.read())
+        st.toast("存档成功！蒋蒋�

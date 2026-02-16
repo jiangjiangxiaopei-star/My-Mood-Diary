@@ -1,10 +1,10 @@
 import streamlit as st
 import os
+from datetime import datetime
 
-# 1. 基础配置
+# 1. 基础配置与样式
 st.set_page_config(page_title="Mood Barometer", page_icon="✨")
 
-# 统一绿色样式
 st.markdown("""
     <style>
     :root { --primary-color: #82C91E; }
@@ -18,12 +18,13 @@ if 'story_text' not in st.session_state: st.session_state.story_text = ""
 
 st.title("✨ Mood Barometer ✨")
 
-# --- 输入区 ---
-mood_icons = ["☀️ Warmth", "🎁 Surprise", "🤣 Hilarious", "😊 Pleasant", "📚 Growth"]
+# --- 3. 输入区 ---
+mood_icons = ["☀️ Warmth", "🎁 Surprise", "🤣 Hilarious", "😊 Pleasant", "📚 Growth", 
+              "🥀 Disappointed", "☁️ Low", "🔥 Angry", "💢 Frustrated", "🆘 Helpless"]
 mood = st.selectbox("1. Mood Icon", mood_icons)
-story = st.text_area("2. Story", value=st.session_state.story_text, placeholder="Tell your story...")
+story = st.text_area("2. Story", value=st.session_state.story_text, placeholder="记录这一刻的心情...", height=100)
 
-# --- 3. Category (选中变绿) ---
+# --- 4. Category (选中变绿) ---
 st.write("3. Category")
 col_h, col_s = st.columns(2)
 
@@ -37,11 +38,47 @@ if col_s.button("SAD", type=s_type, use_container_width=True):
     st.session_state.selected_cat = "SAD"
     st.rerun()
 
-# --- 保存逻辑 ---
+# --- 5. 存档逻辑 ---
 if st.button("🪄 Archive & Save", use_container_width=True, type="primary"):
     if st.session_state.selected_cat and story.strip():
-        # 存档后重置界面
+        time_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+        log_entry = f"[{time_str}] {mood} | {story.strip()}\n"
+        
+        # 写入文件保存
+        file_name = f"{st.session_state.selected_cat.lower()}_history.txt"
+        with open(file_name, "a", encoding="utf-8") as f:
+            f.write(log_entry)
+        
+        # 清空输入框和分类
         st.session_state.story_text = ""
         st.session_state.selected_cat = None
         st.balloons()
         st.rerun()
+    else:
+        st.error("请先写点什么并选择 HAPPY 或 SAD 哦！")
+
+# --- 6. 历史记录查看与删除 ---
+st.write("---")
+st.write("### 📖 History")
+tab1, tab2 = st.tabs(["😊 HAPPY", "☁️ SAD"])
+
+def show_history(file_path, key_prefix):
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+            # 倒序显示，最新的在上面
+            for i, line in enumerate(reversed(lines)):
+                c1, c2 = st.columns([0.85, 0.15])
+                c1.text(line.strip())
+                # 每条记录后面配一个删除按钮
+                if c2.button("🗑️", key=f"{key_prefix}_{i}"):
+                    real_idx = len(lines) - 1 - i
+                    lines.pop(real_idx)
+                    with open(file_path, "w", encoding="utf-8") as fw:
+                        fw.writelines(lines)
+                    st.rerun()
+    else:
+        st.info("还没有记录哦~")
+
+with tab1: show_history("happy_history.txt", "h")
+with tab2: show_history("sad_history.txt", "s")
